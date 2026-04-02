@@ -437,7 +437,12 @@ cd E:\Project\Agent\frontend
 npm run dev
 ```
 
-### Option B: Full Docker
+    5.关闭前后端
+
+```
+Stop-Process -Id (Get-NetTCPConnection -LocalPort 3000).OwningProcess -Force
+Stop-Process -Id (Get-NetTCPConnection -LocalPort 8000).OwningProcess -ForceOption B: Full Docker
+```
 
 ```powershell
 docker compose up --build
