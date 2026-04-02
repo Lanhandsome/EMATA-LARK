@@ -2,7 +2,7 @@
 
 **Enterprise Memory-Augmented Task Agent**
 
-EMATA Runtime🏠 是一个面向企业内部场景的 **Ask Runtime** 原型。它的目标不是做一个“会聊天的机器人”，而是把以下能力统一到一套可扩展运行时里：
+EMATA Runtime是一个面向企业内部场景的 **Ask Runtime** 原型。它的目标不是做一个“会聊天的机器人”，而是把以下能力统一到一套可扩展运行时里：
 
 - **Knowledge**：知识库管理、文档入库、检索、RAG 问答
 - **Context**：多轮对话上下文、工作上下文、待确认动作草案
@@ -324,8 +324,14 @@ PDF 解析通过 MinerU 接入。当前支持：
 展示点：
 
 - search -> rerank -> answer -> citations
+
 - grounded 模式
+
 - 连续追问
+
+  ![Demo 1-1](./images/demo/1.png)
+
+  ![Demo 1-2](./images/demo/2.png)
 
 ### Demo 2: Context Reuse + Group Messaging
 
@@ -344,8 +350,16 @@ PDF 解析通过 MinerU 接入。当前支持：
 展示点：
 
 - working context
+
 - preview / confirm / execute
+
 - Feishu 内部群消息
+
+  ![Demo 2-1](./images/demo/3.png)
+
+  ![Demo 2-2](./images/demo/4.png)
+
+  ![Demo 2-3](./images/demo/5.png)
 
 ### Demo 3: Dialog-driven Coordination
 
@@ -358,9 +372,16 @@ PDF 解析通过 MinerU 接入。当前支持：
 展示点：
 
 - 通用动作解析
+
 - 目标解析
+
 - 预览确认
+
 - 日程执行
+
+  ![Demo 3-1](./images/demo/6.png)
+
+  ![Demo 3-2](./images/demo/7.png)
 
 ---
 
@@ -401,8 +422,6 @@ PDF 解析通过 MinerU 接入。当前支持：
 │  ├─ components/
 │  ├─ lib/
 │  └─ tests/
-├─ docs/
-│  └─ superpowers/
 ├─ infra/
 ├─ scripts/
 ├─ docker-compose.yml
@@ -499,20 +518,20 @@ See [`.env.example`](./.env.example).
 - 可控 Agent 执行链
 - 内部群消息与日程
 
-当前有意不把这些能力包装成“已完全解决”：
+以下未完成：
 
 - 外部联系人自动私聊
 - 外部群复杂协同
 - 高风险动作全自动执行
 - 完整生产级权限治理
 
-这不是缺陷掩盖，而是有意识的系统边界设计。
+因飞书权限边界与系统安全考虑的系统边界设计。
 
 ---
 
 ## Why This Project Is Strong for Interviews
 
-这个项目对技术面试官的价值，不在于“有没有自己训练一个大模型”，而在于：
+这个项目的价值在于：
 
 - 把 **RAG、Context、Agent、Tool Use** 做成了统一运行时
 - 模块之间有边界，而不是把所有逻辑塞进一个页面或一个 prompt
