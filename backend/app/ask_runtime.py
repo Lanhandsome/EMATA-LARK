@@ -454,7 +454,7 @@ class AskKnowledgeQaModule:
         title = item.get("title", "未命名文档")
         snippet = (item.get("snippet") or "").strip()
         return f"{title}：{snippet}"
-
+# 那这个问答知识模块就是有几种情况走常规模型 走检索模型
 
 class AskRuntime:
     def __init__(
@@ -480,6 +480,7 @@ class AskRuntime:
         active_context = self.context_manager.flatten(
             self.context_manager.normalize(session.active_context or {})
         )
+                                                                                                             # 先按照我上下文管理器统一规定的格式来重新构建 传入的这个session.activate_context 然后再扁平化这个结果
         if self.action_module and active_context.get("pending_action_draft"):
             action_result = self.action_module.handle_turn(
                 session=session,

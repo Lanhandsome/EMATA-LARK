@@ -48,7 +48,7 @@ class AskActionDraftModule:
         "反馈汇总",
         "录用推进",
     )
-
+# 那其实我已经搞懂了这个运行的逻辑了 首先是根据我的关键词判断他应该路由到哪个模块 然后如果到了行动模块 如果有未完成的草稿就接着走上次未完成的草稿模块 如果没有就调用大模型 让其给一个结构化的草稿json数据然后作为draft 然后提取出来目标问题是干什么的 和这句话的意图是什么 这就是这个项目的逻辑
     def __init__(
         self,
         *,
@@ -83,11 +83,11 @@ class AskActionDraftModule:
             )
             if continuation is not None:
                 return continuation
-
+                                                                                                                            # 首先从他传入的参数中优先处理session里面看是不是有未完成的草稿 如果有的话优先处理未完成的草稿 处理完后然后返回  如果说没有的话就把message传给意图识别函数的逻辑让他来提取他信息的目的
         intent = self._detect_action_intent(message)
         if not intent:
             return None
-
+                                                                                                                            # 侦察意图 这个侦察意图里面有好几个意图第一个“calendar.schedule"
         if intent == "calendar.schedule":
             draft = self._build_meeting_draft(message=message)
             if draft.get("missing_fields"):
@@ -107,7 +107,7 @@ class AskActionDraftModule:
             if exact_target:
                 draft["resolved_target"] = exact_target
                 return self._build_preview_result(draft=draft)
-
+                                                                                        #直接构建预览的卡片了
             candidates = self.target_resolver.resolve_candidates(
                 query=draft["target_query"],
                 user=user,
@@ -137,7 +137,7 @@ class AskActionDraftModule:
             user=user,
             tools=tools,
         )
-
+# 卧槽这个函数写的好啊 既可以同步执行又可以异步执行 很不错很不错  我喜欢 通过前端传过来的command来做判断 比如说选择选项和
     def handle_command(
         self,
         *,
@@ -164,7 +164,7 @@ class AskActionDraftModule:
                             "type": "card",
                             "text": "请直接在输入框里补充更完整的目标名称，我会继续帮你解析。",
                             "data": {"card_type": "clarification", "field": "target_query"},
-                        }
+                        }                                                                                                                           #阐述清楚
                     ],
                     "state_patch": {
                         "active_skill_state": "clarification_required",
@@ -235,7 +235,7 @@ class AskActionDraftModule:
                     "pending_action_draft": {},
                     "active_skill_state": "executing",
                     "pending_action_followup_field": "",
-                    "last_job_id": job["id"],
+                    "last_job_id": job["id"], # last是最新任务id
                 },
                 "pending_commands": [],
                 "artifacts": [],
@@ -312,7 +312,7 @@ class AskActionDraftModule:
             return self._build_clarification_result(intent=pending_draft.get("intent", "message.send"))
         if content in self.CANCEL_MARKERS:
             return self._build_cancel_result()
-
+# 因为这是未完成的草稿所以应该还是上次的意图 没毛病 ! 上次创建的草稿未完成的字段是什么 如果是target_query那就执行下面的操作 其实target_query 就是message 就是用户输入的消息
         followup_field = str(active_context.get("pending_action_followup_field") or "").strip()
         updated_draft = dict(pending_draft)
         if followup_field == "target_query":
@@ -334,12 +334,12 @@ class AskActionDraftModule:
         ]
         if updated_draft.get("missing_fields"):
             return self._build_clarification_result(intent=updated_draft.get("intent", "message.send"))
-
+# 我传入目标问题 然后来获取直接的目标  然后把要解决的目标 赋值给 ['resolved_target']
         direct_target = self._resolve_direct_target(updated_draft.get("target_query", ""))
         if direct_target is not None:
             updated_draft["resolved_target"] = direct_target
             return self._build_preview_result(draft=updated_draft)
-
+# 有未完成的草稿 我就接着去补充就好了 没有草稿 我就先创建一个草稿 那草稿模块就是这样的
         candidates = self.target_resolver.resolve_candidates(
             query=updated_draft.get("target_query", ""),
             user=user,
@@ -354,7 +354,8 @@ class AskActionDraftModule:
             user=user,
             tools=tools,
         )
-
+# 这段未完成草稿的逻辑 大概就是这样 先检查上次未完成草稿的缺失字段是什么 如果说是没有targe_query那就把他加进这个新更新的草稿 你不仅要更新草稿你还要更新summary 然后summary在actions里面 然后还需要把actions对应的列表的字典全部取出来 把最新的一个actions[0]的summary给更新了 这个状态 这才对 然后把message赋值给他有了问题之后还需要解决问题 把目标问题传给解决问题的函数然后返回清晰的
+    # direct_target 然后新加入这个字段 如果说返回的清晰的目标是空的就去执行 他返回的人的逻辑 后面就一样啊 通过用户发送的信息去解析他的结构化目的然后添加进去这个resolver_target即可 反正就是先处理事情再处理人的
     def _build_message_draft(self, *, message: str, active_context: Dict[str, Any]) -> Dict[str, Any]:
         working_context = dict(active_context.get("working_context") or {})
         if not working_context:
@@ -400,7 +401,7 @@ class AskActionDraftModule:
             ],
             "missing_fields": missing_fields,
         }
-
+# 在没有任何的草稿的时候他的第一步就是调用大模型结构化解析用户的目标 然后返回一个值 用正则表达式来提取结构化的json格式
     def _build_meeting_draft(self, *, message: str) -> Dict[str, Any]:
         target_query = self._extract_meeting_target_with_fallback(message)
         start, end = self._extract_meeting_window(message)
@@ -434,7 +435,7 @@ class AskActionDraftModule:
             ],
             "missing_fields": missing_fields,
         }
-
+# 原来这个是提取人名和要做的事情的我靠
     def _extract_meeting_target_with_fallback(self, message: str) -> str:
         target_query = self._extract_meeting_target(message)
         if target_query:
@@ -585,7 +586,7 @@ class AskActionDraftModule:
         if normalized == "十":
             return 10
         if "十" in normalized:
-            head, _, tail = normalized.partition("十")
+            head, _, tail = normalized.partition("十") #如果是十一点的话  head='',_="十”,tail ='一’
             tens = digits.get(head, 1) if head else 1
             ones = digits.get(tail, 0) if tail else 0
             return tens * 10 + ones
@@ -703,7 +704,7 @@ class AskActionDraftModule:
     @classmethod
     def _can_handle_turn(cls, message: str) -> bool:
         return bool(cls._detect_action_intent(message))
-
+# 先是路由 然后路由进来对他的意图甄别 甄别后再分配到messagesend 还是会议处理
     @classmethod
     def _detect_action_intent(cls, message: str) -> str:
         content = (message or "").strip()

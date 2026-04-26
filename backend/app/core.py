@@ -44,6 +44,7 @@ class StepStatus(str, Enum):
 
 
 class ApprovalStatus(str, Enum):
+
     PENDING = "PENDING"
     APPROVED = "APPROVED"
     REJECTED = "REJECTED"
@@ -130,7 +131,7 @@ class DeliveryJobRecord:
     created_at: str = field(default_factory=utcnow)
     updated_at: str = field(default_factory=utcnow)
 
-
+# 这其实构建的是一个对象
 @dataclass
 class RunRecord:
     id: str

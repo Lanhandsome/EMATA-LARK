@@ -15,7 +15,7 @@ class AskActionPlanner:
             or ""
         ).strip()
 
-        structured = self._parse_with_llm(message=message, working_context=working_context)
+        structured = self._parse_with_llm(message=message, working_context=working_context) #然后把这个信息 和这个相关的上下文文本发给大模型 获取一个结构化的输出
         if self._is_usable_parse(structured):
             target_query = str(structured.get("target_query") or "").strip()
             text = str(structured.get("text") or "").strip()

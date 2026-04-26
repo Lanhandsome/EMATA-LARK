@@ -194,6 +194,12 @@ class AnswerGenerationService:
             },
             timeout=self.timeout_seconds,
         )
+        # OpenAI兼容返回的格式
+        # {
+        # “choices":[
+        # {"messages":{"content":str/[]"},
+        # ]
+        # }
         response.raise_for_status()
         payload = response.json()
         choices = payload.get("choices", [])
@@ -235,7 +241,7 @@ class AnswerGenerationService:
             "Answer the question first, then give a brief supporting explanation. "
             "Do not invent facts that are not supported by the evidence."
         )
-
+# 那其实这个还是通过大模型来实现对其的意图识别 通过我写提示词的方式 来说你要反回给我那些字段 然后把返回的字段来解析提取他的intent 然后在做意图识别之后给他走向不同的工具调用
     @staticmethod
     def _extract_message_parse_payload(raw: str) -> Dict[str, Any]:
         text = (raw or "").strip()

@@ -323,7 +323,7 @@ def create_ask_session(
 @public_router.get("/ask/sessions/{session_id}", response_model=AskSessionResponse)
 def get_ask_session(
     session_id: str,
-    container: ServiceContainer = Depends(get_container),
+    container: ServiceContainer = Depends(get_container), # 你发送一个请求肯定要有请求头 然后还需要有 params url 这三样必不可少
     user=Depends(get_current_user),
 ) -> AskSessionResponse:
     try:

@@ -21,7 +21,7 @@ FEISHU_USER_REQUIRED_SCOPES = [
     "calendar:calendar.event:create",
     "calendar:calendar.event:update",
 ]
-
+# 定义每个工具需要那些权限
 CAPABILITY_SCOPES = {
     "calendar.schedule": [
         "calendar:calendar.event:create",
@@ -155,7 +155,7 @@ class LarkCliRunner:
         )
         sentinel.write_text("initialized\n", encoding="utf-8")
         return config_dir
-
+#为当前用户初始化LARK CLI的配置 并且app_id,和 app_id写入用户的专属目录config目录 ，sentinel哨兵模式 标记这个larkcli已经初始化了
     def run(
         self,
         *,
@@ -251,7 +251,7 @@ class FeishuBindingService:
     def get_status(self, user: UserRecord) -> Dict[str, Any]:
         record = self.store.feishu_bindings.get(user.id)
         if record is None:
-            config_dir = self.runner.config_dir_for(user)
+            config_dir = self.runner.config_dir_for(user) # 就是为这个用户创建一个飞书的专属目录
             if (config_dir / "config.json").exists():
                 recovered = FeishuBindingRecord(
                     id=make_id("binding"),
@@ -363,7 +363,7 @@ class FeishuBindingService:
         record.hint = ""
         self._save(record)
         return self._refresh_status(user, record)
-
+                                                                                        # 这个处理逻辑就是执行命令后 如果有错误就优先执行错误捕捉逻辑  没错误的化再更新这个信息
     def disconnect(self, user: UserRecord) -> Dict[str, Any]:
         self._clear_binding(user)
         return self._status_payload(None)
@@ -383,7 +383,7 @@ class FeishuBindingService:
                 details={"missing_scopes": missing},
             )
         return status_payload
-
+# 更新状态就意味着要重新进行一次和飞书app的没命令交互
     def _refresh_status(self, user: UserRecord, record: FeishuBindingRecord) -> Dict[str, Any]:
         status_payload = self.runner.run(user=user, args=["auth", "status", "--verify"])
         scope_payload = self.runner.run(
@@ -407,7 +407,7 @@ class FeishuBindingService:
         record.updated_at = utcnow()
         self._save(record)
         return self._status_payload(record)
-
+# 这个的意思是只要他前端飞书开始绑定他就会把之前的user.id对应的运行时飞书cli组织id用户id和用户的所有配置全部删除 然后把他的记录从数据库里面也删除 并且把删除记录存到数据库里面
     def _clear_binding(self, user: UserRecord) -> None:
         record = self.store.feishu_bindings.get(user.id)
         try:
@@ -474,14 +474,14 @@ class FeishuBindingService:
             "checked_at": record.checked_at,
         }
 
-
+#
 class LarkCliTool(BaseTool):
     ALLOWED_CAPABILITIES = set(CAPABILITY_SCOPES.keys())
 
     def __init__(self, *, runner: LarkCliRunner, binding_service: FeishuBindingService) -> None:
         self.runner = runner
         self.binding_service = binding_service
-
+# 这个是继承了 刚刚的payload 然后新增了检查这个信息需要的能力在不在这个allowed_capabilities
     def validate(self, payload: Dict[str, Any]) -> None:
         super().validate(payload)
         capability = payload.get("capability")
@@ -536,7 +536,7 @@ class LarkCliTool(BaseTool):
         if _is_doc_url(source):
             return ["docx:document:readonly"]
         return ["drive:file:download"]
-
+# 判断那种工具需要的那是哪种能力
     @staticmethod
     def normalize(result: Dict[str, Any]) -> Dict[str, Any]:
         if "status" not in result:
@@ -867,6 +867,7 @@ class AnswerGenerationTool(BaseTool):
                 "answer": "",
                 "error_message": str(exc),
             }
+
         return {
             "status": "success",
             "mode": "general_llm" if mode == "general" else "llm_rag",

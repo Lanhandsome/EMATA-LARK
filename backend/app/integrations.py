@@ -25,7 +25,7 @@ class QueryRewriteService:
         (("feishu", "飞书", "lark"), ["feishu", "lark"]),
         (("finance", "财务"), ["finance", "financial operations"]),
     ]
-
+#  问答重写服务说白了 就是如果说query里面有这几个关键词之一 就会把后面的全部循环加上去 实现中英文混合使用检索 提高召回率
     def variants(self, query: str) -> List[str]:
         original = self._collapse_whitespace(query)
         if not original:
@@ -528,7 +528,7 @@ class MilvusKnowledgeIndex:
     @staticmethod
     def _tokenize(text: str) -> List[str]:
         return tokenize_text(text)
-
+# self._client 其实返回的是MilvusClient已经连接上服务端的
     def _build_sdk_client(self) -> Any:
         from pymilvus import MilvusClient  # type: ignore
 
@@ -594,7 +594,7 @@ class MilvusKnowledgeIndex:
 
     @staticmethod
     def _truncate(value: str, max_length: int) -> str:
-        encoded = value.encode("utf-8")
+        encoded = value.encode("utf-8")# utf-8 进行加码的话一个中文字符等于3个字节
         if len(encoded) <= max_length:
             return value
 
@@ -646,7 +646,7 @@ class MilvusKnowledgeIndex:
             candidates.append(f"{document_id}-chunk-0")
         return candidates
 
-
+# 说白了这个TemporalRuntime 就是用来连接Server端的 然后连接上用来管理Sever端的对象来实现对workflow_id的管控 发送信号 取消 赞成等等 并且确保他能连接上然后可以通过describe()来返回一个配置字典{}
 class TemporalRuntime:
     def __init__(self, target_hostport: str, namespace: str) -> None:
         self.target_hostport = target_hostport
@@ -660,12 +660,12 @@ class TemporalRuntime:
         try:
             from temporalio.client import Client  # type: ignore
 
-            self._client_cls = Client
+            self._client_cls = Client # 给他的这个属性实例化一个client
             self.mode = "sdk"
             self.reason = "available"
         except Exception:
             self._client_cls = None
-
+#  一个temporal  你要想连接上一个client  首先得先连接temporal这个服务端 然后在客户端这边实例化一个client对象 然后其实有queue，namespace,workflow,
     def describe(self) -> Dict[str, str]:
         return {
             "mode": self.mode,
@@ -688,9 +688,9 @@ class TemporalRuntime:
             payload,
             id=workflow_id,
             task_queue=self.task_queue,
-        )
+        ) #你在初始连接的时候还是要连接好这个EMATARunWorkflow 这个工作流 这是必须要的 #确实 这个workflow只是被启动的 被client启动 这个signal也是被启动的  worker 来启动的workflow和singal 还有activity
         return {"workflow_id": workflow_id, "status": "started"}
-
+# temporal 运行需要部署temporal 然后定义好workflow  还有activity这是任务 还有工作流的任务队列 来给让工作流的任务提交给queue 最后交给工人来干活 workflow.wait_condition(lambda: if self.approve not None or  self.requested_cancedled
     async def signal_run_workflow(
         self,
         workflow_id: str,
@@ -699,7 +699,7 @@ class TemporalRuntime:
     ) -> Dict[str, str]:
         if not self._client_cls:
             raise RuntimeError("temporalio_not_installed")
-
+# 你要保证信号和工作流都连接到同一个服务端  然后实例化一个客户端 因为什么呢 因为这个client已经连接到我的temporalserver端的同一个namespace了 所以就和ok能够启动我的workflow 和signal
         client = await self._client_cls.connect(self.target_hostport, namespace=self.namespace)
         handle = client.get_workflow_handle(workflow_id)
         if payload:

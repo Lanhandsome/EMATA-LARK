@@ -107,7 +107,8 @@ class MinioStorageAdapter:
         if path.startswith(prefix):
             return path[len(prefix) :]
         return path
-
+#  当然 我这里还可以增加其他的存储适配器 只要 我按照开头的那个接口协议来定义方法
+#  然后 我其实只需要修改这个模块我就能实现解耦 因为我的业务代码那边都是通过调用这个方法 返回的一个可以使用的存储适配器对象 然后方法都是通过协议统一实现的
 
 def build_storage_adapter() -> StorageAdapter:
     backend = os.getenv("EMATA_STORAGE_BACKEND", "filesystem").lower()

@@ -1,6 +1,6 @@
 from typing import Any, Dict, List
 
-
+# 这个query 就是刚刚的那个pending_draft[target_query]
 class AskTargetResolver:
     def resolve_search_results(self, *, query: str, user: Any, tools: Dict[str, Any]) -> Dict[str, List[Dict[str, Any]]]:
         normalized_query = (query or "").strip()

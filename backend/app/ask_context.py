@@ -23,7 +23,9 @@ class AskContextManager:
         normalized = deepcopy(self.DEFAULT_CONTEXT)
         if not isinstance(value, dict):
             return normalized
-
+        #  这部分可不就是把第十三个区域的键值给加入进去更新了吗？ “也就是你说的”pending_action_draft:{}" 为什么呢 因为他的for循环会在传入的
+        #值里面去不断的更新新的字段  因为normalized["pendinf_action_draft"] ={},incoming = {} .update  就会把他们之间不一样的字段给给更新 没有的字段给加上去 当然前提
+        # 同一层级的字段嵌套的字段可以不用管 因为不在同一个层级
         for section in self.SECTION_KEYS:
             incoming = value.get(section)
             if isinstance(incoming, dict):
@@ -65,3 +67,4 @@ class AskContextManager:
         flattened.update(working_context)
         flattened["pending_action_draft"] = pending_action_draft
         return flattened
+# 把传进来的数据先按照我的分类方式统一化之后再把更新的字段全部更新到新的这个字典 然后再统一扁平化处理 flattened

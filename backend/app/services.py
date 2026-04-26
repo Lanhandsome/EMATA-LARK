@@ -174,7 +174,8 @@ def _dedupe_terms(values: List[str]) -> List[str]:
         result.append(value)
     return result
 
-
+# 他做了什么 它实现了对query变体和文章的标题内容进行匹配返回一个最佳的query字符串和 和匹配到的词 他是怎么实现的呢 他先把标题和内容分词后返回一个不重复的集合 然后对问题变体列表
+#循环然后 进行对问题变体进行去重然后分词 然后寻找文章分词后和标题分词后重复的进行一个匹配 然后返回一个匹配的列表 然后比较他们匹配的长度 谁的问题变体和文章的匹配词最多就取谁
 def build_match_explanation(query_variants: List[str], title: str, content: str) -> Tuple[Optional[str], List[str]]:
     if not query_variants:
         return None, []
@@ -338,7 +339,7 @@ class ServiceContainer:
                 items.append(workspace)
         items.sort(key=lambda item: item.id)
         return items
-
+# session 是通过 user和initial_context创建的
     def create_ask_session(
         self,
         user: UserRecord,
@@ -541,7 +542,7 @@ class ServiceContainer:
         self.orchestrator.submit_run(run)
         self._ensure_memory_session(run.id)
         return run
-
+# 确保有记忆会话
     def _ensure_memory_session(self, run_id: str) -> MemorySessionRecord:
         existing = self.store.memory_sessions.get(run_id)
         if existing:
@@ -577,7 +578,7 @@ class ServiceContainer:
         run = self.store.runs[run_id]
         self.assert_workspace_access(user, run.workspace_id)
         return run
-
+# self.store.steps[step_id] for step_id in run.step_ids 这样就拿到了所有的步骤记录 self.store.steps[step_id]
     def list_steps(self, run_id: str) -> List[StepRecord]:
         run = self.store.runs[run_id]
         return [self.store.steps[step_id] for step_id in run.step_ids]
@@ -586,28 +587,28 @@ class ServiceContainer:
         run = self.get_run(user, run_id)
         if not run.approval_request_id:
             raise ValueError("approval_not_required")
-        approval = self.store.approvals[run.approval_request_id]
+        approval = self.store.approvals[run.approval_request_id] # 存储审批用一个字典 用审批id 去取审批对象 run.approval_request_id
         if approval.status != ApprovalStatus.PENDING:
             raise ValueError("approval_already_decided")
         normalized = decision.lower()
         if normalized == "approve":
             approval.status = ApprovalStatus.APPROVED
             run.status = RunStatus.RUNNING
-        elif normalized == "reject":
+        elif normalized == "reject":                        # approval.status =ApproavlStatus.REJECTEd                                                          #run.status = RUNStatus.CANCELED
             approval.status = ApprovalStatus.REJECTED
             run.status = RunStatus.CANCELED
         else:
             raise ValueError("invalid_decision")
         approval.decided_by = user.id
-        approval.comment = comment
+        approval.comment = comment # 把已经更新的审批对象 存进去这个store.save_approval()  store.save_run() 内存 和 数据库 sqlaichemy
         self.store.save_approval(approval)
         self.store.save_run(run)
         self.orchestrator.signal_approval(run.id, normalized)
         return run, approval
 
     def retry_run(self, user: UserRecord, run_id: str) -> RunRecord:
-        run = self.get_run(user, run_id)
-        run.status = RunStatus.RETRYING
+        run = self.get_run(user, run_id) # 获取run对象 并且检查这个user是否有权限去这个工作空间id执行这个任务 反正就是检查权限
+        run.status = RunStatus.RETRYING #重试机制说白了就是先拿到 self.get_run(user,run.id) 然后给他run.status = RunState.RETRYING 前面几步主要是更新在内存和数据库的状态 最后一步提交给编排器才是真正的运行完成
         self.store.save_run(run)
         self.orchestrator.submit_run(run)
         return run
@@ -639,7 +640,7 @@ class ServiceContainer:
         if results:
             return {
                 "items": [
-                    self._build_search_hit_from_record(item, query_variants)
+                    self._build_search_hit_from_record(item, query_variants) # 那如果这样的话 整个系统 是穿起来 我明白了 你明白啥了啊 你明白？我现在都还没看懂 少吹np
                     for item in results
                 ],
                 "trace": search_payload["trace"],
@@ -698,7 +699,7 @@ class ServiceContainer:
                 "result_count": len(merged_items[:limit]),
             },
         }
-
+# 他实例化了一个app.state.container
     def parse_resume_payload(
         self,
         *,
@@ -723,7 +724,7 @@ class ServiceContainer:
             "status": "parsed",
             "source_type": resolved_source_type,
             "text": "\n".join(text_parts),
-            "highlights": text_parts[:5],
+            "highlights": text_parts[:5], #欧克  我明白了 这他妈的是列表
         }
 
     def get_upload_status(self, user: UserRecord, upload_id: str) -> KnowledgeSourceFile:
@@ -888,7 +889,7 @@ class ServiceContainer:
             title=title,
             content=content,
         )
-        self.store.documents[document.id] = document
+        self.store.documents[document.id] = document  #你会发现store里面的id映射的都是对象 只要有id 就可以store.documents[document.id]
         self.store.save_document(document)
         chunk = KnowledgeChunkRecord(
             id=f"{document.id}-chunk-0",
@@ -907,7 +908,7 @@ class ServiceContainer:
             token_count_estimate=max(1, len(document.content) // 2),
             metadata={"legacy": True, "source_type": document.source_type},
         )
-        self.store.chunks[chunk.id] = chunk
+        self.store.chunks[chunk.id] = chunk #如果有新加入的 就现在内存里面搞一个mapping来实现映射 比如说store.chunks[chunk.id]=chunk
         self.store.save_chunk(chunk)
         self._index_chunk(chunk)
         return document
@@ -987,7 +988,7 @@ class ServiceContainer:
             query_variants,
             item.get("title", ""),
             item.get("content", ""),
-        )
+        ) # 就是说 我传给她 queryvariant  和content title 他回去匹配问题和内容最相关的 然后返回 匹配到的问题 和匹配的词条
         return build_search_hit(
             chunk_id=item["document_id"],
             title=item["title"],
@@ -1008,7 +1009,7 @@ class ServiceContainer:
 
     @staticmethod
     def _is_upload_canceled(cancel_event: Optional[Any]) -> bool:
-        return bool(cancel_event and cancel_event.is_set())
+        return bool(cancel_event and cancel_event.is_set()) # 这个.is_set()是事件是否被触发
 
     def _finalize_canceled_upload(
         self,

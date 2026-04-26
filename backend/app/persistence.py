@@ -57,7 +57,7 @@ def _serialize(value: Any) -> Any:
         return {key: _serialize(item) for key, item in value.items()}
     return value
 
-
+# 利用sqlai的orm映射
 class SqlAlchemySnapshotStore(InMemoryStore):
     def __init__(self, database_url: str) -> None:
         self.database_url = database_url
@@ -70,7 +70,7 @@ class SqlAlchemySnapshotStore(InMemoryStore):
         self._hydrate()
         self._sync_seed_documents()
         self._persist_seed_documents()
-
+# 你这个最终会有很多行啊 就是很多键值对 他每次启动的时候都会把数据库的数据给加载成字典 至少要把数据库到内存的这个ORM映射搞懂才行啊  这不就已经实现了 把run对应的id加json就给重新加载进去了只需要一个group.get('run',{}).items()
     def _hydrate(self) -> None:
         with self.session_factory() as session:
             rows = session.execute(select(SnapshotModel)).scalars().all()
@@ -236,7 +236,7 @@ class SqlAlchemySnapshotStore(InMemoryStore):
         with self.session_factory() as session:
             row = session.get(SnapshotModel, {"entity_type": entity_type, "entity_id": entity_id})
             if row is not None:
-                session.delete(row)
+                session.delete(row) # delete标记删除  而这个commit是提交事务 在这个数据库当中
                 session.commit()
 
     def save_run(self, run: RunRecord) -> None:

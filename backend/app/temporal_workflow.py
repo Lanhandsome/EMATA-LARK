@@ -16,15 +16,15 @@ if TEMPORAL_SDK_AVAILABLE:
 
     def controlled_step_timeout() -> timedelta:
         return timedelta(seconds=30)
-
+# 把python的函数或者类注册成 temporal 可执行的任务
     @activity.defn(name="run_controlled_step")
     async def run_controlled_step(payload: Dict[str, Any]) -> Dict[str, Any]:
         return {
             "status": "accepted",
-            "step_type": payload.get("type", "unknown"),
+            "step_type": payload.get("type", "unknown"), # 实际上我开发的这个程序里面 就两种step_type一个是planning,too_call
             "payload": payload,
         }
-
+#说明他启动工作流也只是仅仅启动工作流 要实现信号管控还是要在temproalrun里面另写一个函数来对这个实现管控
 
     @workflow.defn(name="emata_run_workflow")
     class EMATARunWorkflow:
@@ -73,7 +73,7 @@ if TEMPORAL_SDK_AVAILABLE:
                 "status": "completed",
                 "result": result,
             }
-
+# 对喔这个是两个入口  如果传过来的 payload里面有审批流程的话就进行这个approval入口
 else:
 
     def controlled_step_timeout() -> timedelta:

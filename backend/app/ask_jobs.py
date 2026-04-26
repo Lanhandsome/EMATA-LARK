@@ -46,7 +46,7 @@ class InMemoryAskJobStore:
         thread = threading.Thread(target=self._run_job, args=(job_id, runner), daemon=True)
         thread.start()
         return snapshot
-
+# 让这个enqueue函数开始运行这个任务  这是真正的执行流程
     def get(self, job_id: str) -> Dict[str, Any]:
         with self._lock:
             job = self._jobs[job_id]
@@ -61,7 +61,7 @@ class InMemoryAskJobStore:
                 yield f"data: {json.dumps(snapshot, ensure_ascii=False)}\n\n"
             if snapshot["status"] in self.TERMINAL_STATUSES:
                 break
-            time.sleep(poll_interval_seconds)
+            time.sleep(poll_interval_seconds) #轮询间隔秒数
 
     def _run_job(self, job_id: str, runner: Callable[[], Any]) -> None:
         self._update(job_id, status="running")
@@ -83,7 +83,7 @@ class InMemoryAskJobStore:
                 ],
                 error_message=str(exc),
             )
-
+# 他可以开一个线程在后台自主的执行这个任务
     def _update(self, job_id: str, **changes: Any) -> None:
         with self._lock:
             job = self._jobs[job_id]
